@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.4</version>
+    <date>2022-02-22T20:57:27Z</date>
+    <groups>
+        <group>
+            <name>BGP Routers</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>FRR bgp sessions</template>
+            <name>FRR bgp sessions</name>
+            <groups>
+                <group>
+                    <name>BGP Routers</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>FRR BGP sessions</name>
+                </application>
+            </applications>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>BGP peers discovery</name>
+                    <key>bgp.peers.discovery</key>
+                    <delay>1h</delay>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>BGP neighbor state json</name>
+                            <key>bgp.peer.state[{#PEER_IP}]</key>
+                            <history>10d</history>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>FRR BGP sessions</name>
+                                </application>
+                            </applications>
+                            <request_method>POST</request_method>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>BGP {#PEER_IP} ({#DESCRIPTION}) received routes</name>
+                            <type>DEPENDENT</type>
+                            <key>bgp.peer.[{#PEER_IP}, pfRcd]</key>
+                            <delay>0</delay>
+                            <history>15d</history>
+                            <trends>0</trends>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>FRR BGP sessions</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.state</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>bgp.peer.state[{#PEER_IP}]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>BGP {#PEER_IP} ({#DESCRIPTION}) state</name>
+                            <type>DEPENDENT</type>
+                            <key>bgp.peer.[{#PEER_IP}, state]</key>
+                            <delay>0</delay>
+                            <history>15d</history>
+                            <trends>0</trends>
+                            <value_type>FLOAT</value_type>
+                            <applications>
+                                <application>
+                                    <name>FRR BGP sessions</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>FRR BGP peers state</name>
+                            </valuemap>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.state</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>bgp.peer.state[{#PEER_IP}]</key>
+                            </master_item>
+                            <request_method>POST</request_method>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last(,5)}&lt;-2</expression>
+                                    <name>BGP session - {#PEER_IP} {#DESCRIPTION} is down</name>
+                                    <priority>DISASTER</priority>
+                                    <description>Last value: {ITEM.LASTVALUE1}.</description>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last(,5)}=-1</expression>
+                                    <name>BGP session - {#PEER_IP} {#DESCRIPTION} is shutdown</name>
+                                    <priority>WARNING</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <request_method>POST</request_method>
+                </discovery_rule>
+            </discovery_rules>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>FRR BGP peers state</name>
+            <mappings>
+                <mapping>
+                    <value>-1</value>
+                    <newvalue>Idle (Admin)</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-2</value>
+                    <newvalue>Idle (PfxCt)</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-3</value>
+                    <newvalue>Idle</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-4</value>
+                    <newvalue>Connect</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-5</value>
+                    <newvalue>Active</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-6</value>
+                    <newvalue>OpenSent</newvalue>
+                </mapping>
+                <mapping>
+                    <value>-7</value>
+                    <newvalue>OpenConfirm</newvalue>
+                </mapping>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Established</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
