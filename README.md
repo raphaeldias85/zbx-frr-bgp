@@ -1,7 +1,7 @@
 # Monitoring FRR BGP sessions for zabbix
 
 ## Description
-Discover and monitor BGP session with count of prefix or state like "Active" or Idle (Admin).
+Discover and monitor BGP sessions with count of prefix or state like "Active" or Idle (Admin).
 Trigger if session change state.
 
 ## Requirements
