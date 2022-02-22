@@ -9,7 +9,7 @@ Trigger if session change state.
 - Zabbix from 3.4 version
 
 ## Installation
-- copy bgpmon to /usr/local/sbin
+- copy zbx-frr-bgp to /usr/local/sbin
 - give execute bit `chmod +x /usr/local/sbin/zbx-frr-bgp`
 - copy file userparameter_zbx-frr-bgp.conf to /etc/zabbix/zabbix_agentd.d/
 - Provide vtysh access to user zabbix
