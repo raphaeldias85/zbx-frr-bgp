@@ -35,7 +35,7 @@ def run_config():
         if time.time() - time_cur_json <= CACHELIFE:
             with open(JSONFILE) as f:
                 json_cache = json.load(f)
-    else:
+    if not json_cache:
         try:
             process = subprocess.Popen(
                 ["vtysh", "-c", "show ip bgp summary json"], stdout=subprocess.PIPE)
@@ -44,8 +44,9 @@ def run_config():
             sys.exit(1)
         out, err = process.communicate()
         json_cache = json.loads(out.decode())
-        with open(JSONFILE, 'w') as f:
-            json.dump(json_cache, f)
+        f = open(JSONFILE, 'w')
+        f.write(out.decode())
+        f.close()
 
     return json_cache
 
@@ -58,7 +59,12 @@ if __name__ == '__main__':
 
         for n in neighbors:
             if neighbors[args.n]['state']:
-                result = {"state": VAL_MAP.get(neighbors[args.n]['state'])}
+                result = {
+                        "state": VAL_MAP.get(neighbors[args.n]['state']),
+                        "pfxRcd": neighbors[args.n].get('pfxRcd',0),
+                        "pfxSnt": neighbors[args.n].get('pfxSnt',0),
+                        "peerUptimeEstablishedEpoch": neighbors[args.n].get('peerUptimeEstablishedEpoch',-1)
+                        }
                 break
 
     if args.action == 'discovery':
@@ -68,7 +74,10 @@ if __name__ == '__main__':
             description = neighbors[n]
             value = {
                 "{#PEER_IP}": n,
-                "{#DESCRIPTION}": neighbors[n]['hostname']}
+                "{#PFX_RCD}": neighbors[n].get('pfxRcd',0),
+                "{#PFX_SNT}": neighbors[n].get('pfxSnt',0),
+                "{#UPTIME}": neighbors[n].get('peerUptimeEstablishedEpoch',-1),
+                "{#DESCRIPTION}": neighbors[n].get('hostname','')}
             result["data"].append(value)
     if not result:
         print("3ZBX_NOTSUPPORTED")
