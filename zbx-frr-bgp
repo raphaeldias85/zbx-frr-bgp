@@ -7,16 +7,20 @@ import argparse
 import os
 import time
 
+
 VAL_MAP = {
-    "Idle (Admin)": {"state": -1},
-    "Idle (PfxCt)": {"state": -2},
-    "Idle": {"state": -3},
-    "Connect": {"state": -4},
-    "Active": {"state": -5},
-    "OpenSent": {"state": -6},
-    "OpenConfirm": {"state": -7},
-    "Established": {"state": 0}
+    "Established": 0,
+    "Idle (Admin)": -1,
+    "Idle (PfxCt)": -2,
+    "Idle": -3,
+    "Connect": -4,
+    "Active": -5,
+    "OpenSent": -6,
+    "OpenConfirm": -7
 }
+
+JSONFILE = '/tmp/bgpmon.json'
+CACHELIFE = 60
 
 parser = argparse.ArgumentParser()
 parser.add_argument("action", help="discovery")
@@ -25,16 +29,25 @@ args = parser.parse_args()
 
 
 def run_config():
-    neighbor_settings = {}
-    try:
-        process = subprocess.Popen(
-            ["vtysh", "-c", "show ip bgp summary json"], stdout=subprocess.PIPE)
-    except IOError:
-        print("1ZBX_NOTSUPPORTED")
-        sys.exit(1)
-    out, err = process.communicate()
+    json_cache = {}
+    if os.path.exists(JSONFILE):
+        time_cur_json = os.path.getmtime(JSONFILE)
+        if time.time() - time_cur_json <= CACHELIFE:
+            with open(JSONFILE) as f:
+                json_cache = json.load(f)
+    else:
+        try:
+            process = subprocess.Popen(
+                ["vtysh", "-c", "show ip bgp summary json"], stdout=subprocess.PIPE)
+        except IOError:
+            print("1ZBX_NOTSUPPORTED")
+            sys.exit(1)
+        out, err = process.communicate()
+        json_cache = json.loads(out.decode())
+        with open(JSONFILE, 'w') as f:
+            json.dump(json_cache, f)
 
-    return json.loads(out.decode())
+    return json_cache
 
 if __name__ == '__main__':
     result = None
@@ -45,8 +58,7 @@ if __name__ == '__main__':
 
         for n in neighbors:
             if neighbors[args.n]['state']:
-                value = neighbors[args.n]['state']
-                result = VAL_MAP.get(value, value)
+                result = {"state": VAL_MAP.get(neighbors[args.n]['state'])}
                 break
 
     if args.action == 'discovery':
