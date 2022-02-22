@@ -10,12 +10,8 @@ Trigger if session change state.
 
 ## Installation
 - copy bgpmon to /usr/local/sbin
-- give execute bit `chmod +x /usr/local/sbin/bgpmon`
-- write file for zabbix agent for example /etc/zabbix/zabbix_agentd.d/userparameter_zbx-frr-bgp.conf
-```sh
-UserParameter=bgp.peers.discovery,/usr/local/sbin/bgpmon discovery
-UserParameter=bgp.peer.state[*],/usr/local/sbin/bgpmon neighbor_state -n $1
-```
+- give execute bit `chmod +x /usr/local/sbin/zbx-frr-bgp`
+- copy file userparameter_zbx-frr-bgp.conf to /etc/zabbix/zabbix_agentd.d/
 - Provide vtysh access to user zabbix
   ```
   sudo usermod -a -G frrvty zabbix
